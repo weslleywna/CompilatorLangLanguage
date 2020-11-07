@@ -1,4 +1,0 @@
-main(){
-  print 10;
-  x if 1
-}
