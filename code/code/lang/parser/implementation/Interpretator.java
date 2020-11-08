@@ -168,10 +168,9 @@ public class Interpretator extends langBaseVisitor<Object> {
     public Object visitSexp(langParser.SexpContext ctx) {
         switch (ctx.getChild(0).toString()){
             case "!":
-                return !Boolean.valueOf(super.visitSexp(ctx.sexp()).toString());
+                return !Boolean.valueOf(this.visitSexp(ctx.sexp()).toString());
             case "-":
-                return 0;
-            //TODO: Q Q ESSE CARAI FAZ?
+                return 0; //TODO: Q Q ESSE CARAI FAZ?
         }
 
         if(ctx.getChild(0) == ctx.BOOLEAN()) {
@@ -191,7 +190,6 @@ public class Interpretator extends langBaseVisitor<Object> {
         }
         if(ctx.getChild(0) == ctx.LITERAL()) {
             return ctx.getChild(0).toString();
-            //TODO: CASTEIO ESSE MALDITO COM O QUE?
         }
         if (ctx.pexp() != null) {
             return this.visitPexp(ctx.pexp());
@@ -202,6 +200,15 @@ public class Interpretator extends langBaseVisitor<Object> {
 
     @Override
     public Object visitPexp(langParser.PexpContext ctx) {
+        if (ctx.getChildCount() == 1) {
+            return this.visitLvalue(ctx.lvalue());
+        }
+
+        if (ctx.getChild(0) == ctx.PARENTHESIS_OPEN())
+        {
+            return this.visitExp(ctx.exp());
+        }
+
         return super.visitPexp(ctx);
     }
 
