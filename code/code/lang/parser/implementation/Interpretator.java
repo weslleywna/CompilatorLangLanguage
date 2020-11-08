@@ -26,16 +26,20 @@ public class Interpretator extends langBaseVisitor<Object> {
 
     @Override
     public Object visitData(langParser.DataContext ctx) {
-        //TODO: DATA TYPENAME KEYS_OPEN (decl)* KEYS_CLOSE
+
+        if (ctx.getChild(0) == ctx.DATA()) {
+            //TODO: DATA TYPENAME KEYS_OPEN (decl)* KEYS_CLOSE
+        }
 
         return super.visitData(ctx);
     }
 
     @Override
     public Object visitDecl(langParser.DeclContext ctx) {
-        //TODO: IDENTIFIER DPDP type SEMI
-
-        return super.visitDecl(ctx);
+        if (ctx.getChild(0) == ctx.IDENTIFIER()) {
+            return this.visitType(ctx.type());
+        }
+        throw new RuntimeException("unknown identifier: " + ctx.getChild(0).toString());
     }
 
     @Override
@@ -102,7 +106,7 @@ public class Interpretator extends langBaseVisitor<Object> {
             //TODO: KEYS_OPEN (cmd)* KEYS_CLOSE
         }
         if(ctx.getChild(0) == ctx.IF()){
-            if(ctx.getChild(ctx.getChildCount() -1) == ctx.ELSE()){
+            if(ctx.getChild(ctx.getChildCount() - 2) == ctx.ELSE()){
                 if(Boolean.valueOf(this.visitExp(ctx.exp(0)).toString())){
                     return this.visitCmd(ctx.cmd(0));
                 } else {
@@ -111,6 +115,8 @@ public class Interpretator extends langBaseVisitor<Object> {
             } else {
                 if(Boolean.valueOf(this.visitExp(ctx.exp(0)).toString())){
                     return this.visitCmd(ctx.cmd(0));
+                } else {
+                    return null;
                 }
             }
         }
