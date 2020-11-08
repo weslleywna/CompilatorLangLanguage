@@ -93,16 +93,27 @@ public class Interpretator extends langBaseVisitor<Object> {
         if(ctx.getChild(0) == ctx.lvalue(0)) {
             Object valueLValue = visitLvalue(ctx.lvalue(0));
             Object valueExp = visitExp(ctx.exp(0));
-
             enviroment.peek().put(valueLValue.toString(), valueExp);
+
             System.out.println(enviroment.peek());
         }
 
         if(ctx.getChild(0) == ctx.KEYS_OPEN()){
             //TODO: KEYS_OPEN (cmd)* KEYS_CLOSE
         }
-        //TODO: IF PARENTHESIS_OPEN exp PARENTHESIS_CLOSE cmd
-        //TODO: IF PARENTHESIS_OPEN exp PARENTHESIS_CLOSE cmd ELSE cmd
+        if(ctx.getChild(0) == ctx.IF()){
+            if(ctx.getChild(ctx.getChildCount() -1) == ctx.ELSE()){
+                if(Boolean.valueOf(this.visitExp(ctx.exp(0)).toString())){
+                    return this.visitCmd(ctx.cmd(0));
+                } else {
+                    return this.visitCmd(ctx.cmd(1));
+                }
+            } else {
+                if(Boolean.valueOf(this.visitExp(ctx.exp(0)).toString())){
+                    return this.visitCmd(ctx.cmd(0));
+                }
+            }
+        }
         if(ctx.getChild(0) == ctx.ITERATE()){
             //TODO: ITERATE PARENTHESIS_OPEN exp PARENTHESIS_CLOSE cmd
         }
@@ -248,7 +259,6 @@ public class Interpretator extends langBaseVisitor<Object> {
         }
         if (ctx.getChild(0) == ctx.IDENTIFIER())
         {
-
             //TODO: IDENTIFIER PARENTHESIS_OPEN (exps)? PARENTHESIS_CLOSE BRACKET_OPEN exp BRACKET_CLOSE
         }
 
@@ -258,7 +268,8 @@ public class Interpretator extends langBaseVisitor<Object> {
     @Override
     public Object visitLvalue(langParser.LvalueContext ctx) {
         if(ctx.getChild(0) == ctx.IDENTIFIER()) {
-            return ctx.getChild(0);
+            Object value = enviroment.peek().get(ctx.getChild(0).toString());
+            return value == null? ctx.getChild(0) : value;
         }
         if (ctx.getChildCount() == 4) {
             //TODO: lvalue BRACKET_OPEN exp BRACKET_CLOSE
