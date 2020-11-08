@@ -70,24 +70,55 @@ public class Interpretator extends langBaseVisitor<Object> {
 
     @Override
     public Object visitExp(langParser.ExpContext ctx) {
+        if (ctx.getChildCount() == 1) {
+            return super.visitRexp(ctx.rexp());
+        }
 
+        Object left = this.visitExp(ctx.exp(0));
+        Object right = this.visitExp(ctx.exp(1));
 
-        return super.visitExp(ctx);
+        return (boolean) left && (boolean) right;
     }
 
     @Override
     public Object visitRexp(langParser.RexpContext ctx) {
-        return super.visitRexp(ctx);
+        if (ctx.getChildCount() == 1) {
+            return super.visitAexp(ctx.aexp(0));
+        }
+
+        switch (ctx.getChild(1).toString()) {
+            case "<":
+                return CalculateLogicValue(this.visitAexp(ctx.aexp(0)), this.visitAexp(ctx.aexp(1)), "<");
+            case "==":
+                return this.visitRexp(ctx.rexp()) == this.visitAexp(ctx.aexp(0));
+            case "!=":
+                return this.visitRexp(ctx.rexp()) != this.visitAexp(ctx.aexp(0));
+            default:
+                throw new RuntimeException("unknown operator: " + ctx.getChild(1).toString());
+        }
     }
 
     @Override
     public Object visitAexp(langParser.AexpContext ctx) {
-        return super.visitAexp(ctx);
+        if (ctx.getChildCount() == 1) {
+            return super.visitMexp(ctx.mexp());
+        }
+
+        Object left = this.visitAexp(ctx.aexp());
+        Object right = super.visitMexp(ctx.mexp());
+
+        switch (ctx.getChild(1).toString()) {
+            case "+":
+                return CalculateArithmeticValue(left, right, "+");
+            case "-":
+                return CalculateArithmeticValue(left, right, "-");
+            default:
+                throw new RuntimeException("unknown operator: " + ctx.getChild(1).toString());
+        }
     }
 
     @Override
     public Object visitMexp(langParser.MexpContext ctx) {
-
         if (ctx.getChildCount() == 1) {
             return super.visitSexp(ctx.sexp());
         }
@@ -97,11 +128,11 @@ public class Interpretator extends langBaseVisitor<Object> {
 
         switch (ctx.getChild(1).toString()) {
             case "*":
-                return (Float)left * (Float)right;
+                return CalculateArithmeticValue(left, right, "*");
             case "/":
-                return (Float)left / (Float)right;
+                return CalculateArithmeticValue(left, right, "/");
             case "%":
-                return (Float)left % (Float)right;
+                return CalculateArithmeticValue(left, right, "%");
             default:
                 throw new RuntimeException("unknown operator: " + ctx.getChild(1).toString());
         }
@@ -109,11 +140,13 @@ public class Interpretator extends langBaseVisitor<Object> {
 
     @Override
     public Object visitSexp(langParser.SexpContext ctx) {
-
         if(ctx.getChild(0) == ctx.INTEGER()) {
             return Integer.parseInt(ctx.getChild(0).toString());
         }
-        return super.visitSexp(ctx);
+        if(ctx.getChild(0) == ctx.FLOAT()) {
+            return Float.parseFloat(ctx.getChild(0).toString());
+        }
+        return 0;
     }
 
     @Override
@@ -134,5 +167,41 @@ public class Interpretator extends langBaseVisitor<Object> {
     @Override
     public Object visitExps(langParser.ExpsContext ctx) {
         return super.visitExps(ctx);
+    }
+
+    public Object CalculateArithmeticValue(Object exp1, Object exp2, String operator){
+        switch (operator){
+            case "+":
+                if(exp1 instanceof Integer && exp2 instanceof Integer){
+                    return Integer.parseInt(exp1.toString()) + Integer.parseInt(exp2.toString());
+                }
+                else {
+                    return Float.parseFloat(exp1.toString()) + Float.parseFloat(exp2.toString());
+                }
+            case "-":
+                if(exp1 instanceof Integer && exp2 instanceof Integer){
+                    return Integer.parseInt(exp1.toString()) - Integer.parseInt(exp2.toString());
+                }
+                else {
+                    return Float.parseFloat(exp1.toString()) - Float.parseFloat(exp2.toString());
+                }
+            case "*":
+                return Float.parseFloat(exp1.toString()) * Float.parseFloat(exp2.toString());
+            case "/":
+                return Float.parseFloat(exp1.toString()) / Float.parseFloat(exp2.toString());
+            case "%":
+                return Float.parseFloat(exp1.toString()) % Float.parseFloat(exp2.toString());
+            default:
+                throw new RuntimeException("unknown operator: " + operator);
+        }
+    }
+
+    public Object CalculateLogicValue(Object exp1, Object exp2, String operator){
+        switch (operator){
+            case "<":
+                return Float.parseFloat(exp1.toString()) < Float.parseFloat(exp2.toString());
+            default:
+                throw new RuntimeException("unknown operator: " + operator);
+        }
     }
 }
