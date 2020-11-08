@@ -46,12 +46,38 @@ public class Interpretator extends langBaseVisitor<Object> {
 
     @Override
     public Object visitType(langParser.TypeContext ctx) {
+
+        if (ctx.getChildCount() == 1) {
+            return super.visitBtype(ctx.btype());
+        }
+
         return super.visitType(ctx);
     }
 
     @Override
     public Object visitBtype(langParser.BtypeContext ctx) {
-        return super.visitBtype(ctx);
+
+        if(ctx.getChild(0) == ctx.INTEGER()) {
+            return ctx.getChild(0);
+        }
+
+        if(ctx.getChild(0) == ctx.CHAR()) {
+            return ctx.getChild(0);
+        }
+
+        if(ctx.getChild(0) == ctx.BOOLEAN()) {
+            return ctx.getChild(0);
+        }
+
+        if(ctx.getChild(0) == ctx.FLOAT()) {
+            return ctx.getChild(0);
+        }
+
+        if(ctx.getChild(0) == ctx.TYPENAME()) {
+            return ctx.getChild(0);
+        }
+
+        throw new RuntimeException("unknown operator: " + ctx.getChild(0).toString());
     }
 
     @Override
@@ -190,7 +216,11 @@ public class Interpretator extends langBaseVisitor<Object> {
 
     @Override
     public Object visitExps(langParser.ExpsContext ctx) {
-        return super.visitExps(ctx);
+        if(ctx.getChild(1) == ctx.COMMA()) {
+            return this.visitExp(ctx.exp(0));
+        }
+
+        return super.visitExp(ctx.exp(0));
     }
 
     public Object CalculateArithmeticValue(Object exp1, Object exp2, String operator){
