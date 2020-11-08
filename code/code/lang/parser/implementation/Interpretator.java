@@ -71,19 +71,19 @@ public class Interpretator extends langBaseVisitor<Object> {
     @Override
     public Object visitExp(langParser.ExpContext ctx) {
         if (ctx.getChildCount() == 1) {
-            return super.visitRexp(ctx.rexp());
+            return this.visitRexp(ctx.rexp());
         }
 
         Object left = this.visitExp(ctx.exp(0));
         Object right = this.visitExp(ctx.exp(1));
 
-        return (boolean) left && (boolean) right;
+        return Boolean.valueOf(left.toString()) && Boolean.valueOf(right.toString());
     }
 
     @Override
     public Object visitRexp(langParser.RexpContext ctx) {
         if (ctx.getChildCount() == 1) {
-            return super.visitAexp(ctx.aexp(0));
+            return this.visitAexp(ctx.aexp(0));
         }
 
         switch (ctx.getChild(1).toString()) {
@@ -101,11 +101,11 @@ public class Interpretator extends langBaseVisitor<Object> {
     @Override
     public Object visitAexp(langParser.AexpContext ctx) {
         if (ctx.getChildCount() == 1) {
-            return super.visitMexp(ctx.mexp());
+            return this.visitMexp(ctx.mexp());
         }
 
         Object left = this.visitAexp(ctx.aexp());
-        Object right = super.visitMexp(ctx.mexp());
+        Object right = this.visitMexp(ctx.mexp());
 
         switch (ctx.getChild(1).toString()) {
             case "+":
@@ -120,7 +120,7 @@ public class Interpretator extends langBaseVisitor<Object> {
     @Override
     public Object visitMexp(langParser.MexpContext ctx) {
         if (ctx.getChildCount() == 1) {
-            return super.visitSexp(ctx.sexp());
+            return this.visitSexp(ctx.sexp());
         }
 
         Object left = this.visitMexp(ctx.mexp());
@@ -140,13 +140,38 @@ public class Interpretator extends langBaseVisitor<Object> {
 
     @Override
     public Object visitSexp(langParser.SexpContext ctx) {
+        switch (ctx.getChild(0).toString()){
+            case "!":
+                return !Boolean.valueOf(super.visitSexp(ctx.sexp()).toString());
+            case "-":
+                return 0;
+            //TODO: Q Q ESSE CARAI FAZ?
+        }
+
+        if(ctx.getChild(0) == ctx.BOOLEAN()) {
+            return Boolean.valueOf(ctx.getChild(0).toString());
+        }
+        if(ctx.getChild(0) == ctx.NULL()) {
+            return null;
+        }
         if(ctx.getChild(0) == ctx.INTEGER()) {
             return Integer.parseInt(ctx.getChild(0).toString());
         }
         if(ctx.getChild(0) == ctx.FLOAT()) {
             return Float.parseFloat(ctx.getChild(0).toString());
         }
-        return 0;
+        if(ctx.getChild(0) == ctx.CHAR()) {
+            return ctx.getChild(0).toString().charAt(1);
+        }
+        if(ctx.getChild(0) == ctx.LITERAL()) {
+            return ctx.getChild(0).toString();
+            //TODO: CASTEIO ESSE MALDITO COM O QUE?
+        }
+        if (ctx.pexp() != null) {
+            return this.visitPexp(ctx.pexp());
+        }
+
+        throw new RuntimeException("unknown operator: " + ctx.getChild(0).toString());
     }
 
     @Override
@@ -156,7 +181,6 @@ public class Interpretator extends langBaseVisitor<Object> {
 
     @Override
     public Object visitLvalue(langParser.LvalueContext ctx) {
-
         if(ctx.getChild(0) == ctx.IDENTIFIER()) {
             return ctx.getChild(0);
         }

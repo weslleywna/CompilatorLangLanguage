@@ -14,7 +14,7 @@ import java.util.List;
 
 public class TestParser {
    private ParseAdaptor adp;
-   private String okSrcs = "testes/sintaxe/certo/";
+   private String okSrcs = "C:\\Users\\bioni\\OneDrive\\Documentos\\UFJF\\Teoria dos Compiladores\\trabalho - parte 2\\CompilatorLangLanguage\\code\\code\\testes\\sintaxe\\certo";
    private File f;
    
    public TestParser(ParseAdaptor adp){
