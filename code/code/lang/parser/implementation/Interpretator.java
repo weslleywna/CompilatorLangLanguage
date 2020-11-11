@@ -29,7 +29,16 @@ public class Interpretator extends langBaseVisitor<Object> {
 
     @Override
     public Object visitProg(langParser.ProgContext ctx) {
-        return super.visitProg(ctx);
+
+        for (langParser.FuncContext ctxFunc : ctx.func()) {
+            functions.put(ctxFunc.getChild(0).getText(), ctxFunc);
+        }
+
+        if (functions.get("main") != null) {
+            return this.visitFunc((langParser.FuncContext) functions.get("main"));
+        }
+
+        throw new RuntimeException("no main function");
     }
 
     @Override
@@ -57,13 +66,12 @@ public class Interpretator extends langBaseVisitor<Object> {
 
     @Override
     public Object visitFunc(langParser.FuncContext ctx) {
-        functions.put(ctx.getChild(0).getText(), ctx);
-        if (Objects.nonNull(ctx.params())) {
-
-            return null;
-        }
-
         //TODO: IDENTIFIER PARENTHESIS_OPEN (params)? PARENTHESIS_CLOSE (DP type (COMMA type)*)? KEYS_OPEN (cmd)* KEYS_CLOSE
+        for (langParser.CmdContext ctxCmd : ctx.cmd()) {
+            if (this.visitCmd(ctxCmd) == null) {
+                return null;
+            };
+        }
 
         return super.visitFunc(ctx);
     }
