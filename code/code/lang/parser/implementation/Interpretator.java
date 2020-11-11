@@ -2,21 +2,29 @@ package lang.parser.implementation;
 
 import lang.parser.implementation.lang.parser.antlr.langBaseVisitor;
 import lang.parser.implementation.lang.parser.antlr.langParser;
+import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.Stack;
 
 public class Interpretator extends langBaseVisitor<Object> {
 
     private final Stack<HashMap<String, Object>> enviroment;
     private final HashMap<String, Object> functions;
+    private final HashMap<String, Object> dataClass;
     private final Stack<Object> operands;
 
+    private static class DataClassDefinition {
+        protected HashMap<String, TerminalNodeImpl> properties = new HashMap<>();
+    }
+
     public Interpretator() {
-        enviroment = new Stack<HashMap<String, Object>>();
-        enviroment.push(new HashMap<String, Object>());
-        functions = new HashMap<String, Object>();
-        operands = new Stack<Object>();
+        enviroment = new Stack<>();
+        enviroment.push(new HashMap<>());
+        functions = new HashMap<>();
+        dataClass = new HashMap<>();
+        operands = new Stack<>();
     }
 
     @Override
@@ -26,12 +34,17 @@ public class Interpretator extends langBaseVisitor<Object> {
 
     @Override
     public Object visitData(langParser.DataContext ctx) {
-
         if (ctx.getChild(0) == ctx.DATA()) {
-            //TODO: DATA TYPENAME KEYS_OPEN (decl)* KEYS_CLOSE
+            DataClassDefinition dataClassDefinition = new DataClassDefinition();
+            if (Objects.nonNull(ctx.decl())) {
+                for (langParser.DeclContext ctxDecl : ctx.decl()) {
+                    Object result = this.visitDecl(ctxDecl);
+                    dataClassDefinition.properties.put(ctxDecl.getChild(0).getText(), (TerminalNodeImpl) result);
+                }
+            }
+            dataClass.put(ctx.getChild(1).getText(), dataClassDefinition);
         }
-
-        return super.visitData(ctx);
+        return null;
     }
 
     @Override
@@ -44,6 +57,12 @@ public class Interpretator extends langBaseVisitor<Object> {
 
     @Override
     public Object visitFunc(langParser.FuncContext ctx) {
+        functions.put(ctx.getChild(0).getText(), ctx);
+        if (Objects.nonNull(ctx.params())) {
+
+            return null;
+        }
+
         //TODO: IDENTIFIER PARENTHESIS_OPEN (params)? PARENTHESIS_CLOSE (DP type (COMMA type)*)? KEYS_OPEN (cmd)* KEYS_CLOSE
 
         return super.visitFunc(ctx);
@@ -102,9 +121,13 @@ public class Interpretator extends langBaseVisitor<Object> {
             System.out.println(enviroment.peek());
         }
 
+        //TODO : TESTAR ESSE IF AI
         if(ctx.getChild(0) == ctx.KEYS_OPEN()){
-            //TODO: KEYS_OPEN (cmd)* KEYS_CLOSE
+            for (langParser.CmdContext ctxCmd : ctx.cmd()) {
+                return this.visitCmd(ctxCmd);
+            }
         }
+
         if(ctx.getChild(0) == ctx.IF()){
             if(ctx.getChild(ctx.getChildCount() - 2) == ctx.ELSE()){
                 if(Boolean.valueOf(this.visitExp(ctx.exp(0)).toString())){
