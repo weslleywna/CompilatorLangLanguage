@@ -9,6 +9,7 @@ import lang.ast.SuperNode;
 import lang.parser.ParseAdaptor;
 import lang.parser.implementation.lang.parser.antlr.langParser;
 import lang.parser.implementation.lang.parser.antlr.langLexer;
+import lang.parser.implementation.semantic.SemanticAnalyser;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -31,8 +32,10 @@ public class Parser implements ParseAdaptor {
                 return null;
             }
 
+            SemanticAnalyser semanticAnalyser = new SemanticAnalyser();
+            semanticAnalyser.visit(tree);
             Interpretator interpretator = new Interpretator();
-            interpretator.visit(tree);
+            //interpretator.visit(tree);
 
             SuperNode node = new Node();
             return node;
