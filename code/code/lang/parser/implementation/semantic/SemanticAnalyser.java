@@ -4,6 +4,8 @@ import lang.parser.implementation.lang.parser.antlr.langBaseVisitor;
 import lang.parser.implementation.lang.parser.antlr.langParser;
 import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.Stack;
@@ -14,10 +16,6 @@ public class SemanticAnalyser extends langBaseVisitor<Object> {
     private final HashMap<String, Object> functions;
     private final HashMap<String, Object> dataClass;
     private final Stack<Object> operands;
-
-    private static class DataClassDefinition {
-        protected HashMap<String, TerminalNodeImpl> properties = new HashMap<>();
-    }
 
     public SemanticAnalyser() {
         enviroment = new Stack<>();
@@ -85,35 +83,36 @@ public class SemanticAnalyser extends langBaseVisitor<Object> {
 
     @Override
     public SemanticTypes visitType(langParser.TypeContext ctx) {
-        //TODO: type BRACKET_OPEN BRACKET_CLOSE
         if (ctx.getChildCount() == 1) {
             return this.visitBtype(ctx.btype());
         }
-
-        throw new RuntimeException("unknown operator: " + ctx.getChild(0).toString());
+        else {
+            return this.visitType(ctx.type());
+        }
     }
 
     @Override
     public SemanticTypes visitBtype(langParser.BtypeContext ctx) {
 
         if(ctx.getChild(0) == ctx.INTEGER()) {
-            return ctx.getChild(0);
+            return new Numeric();
         }
 
         if(ctx.getChild(0) == ctx.CHAR()) {
-            return ctx.getChild(0);
+            return new Char();
         }
 
         if(ctx.getChild(0) == ctx.BOOLEAN()) {
-            return ctx.getChild(0);
+            return new Boolean();
         }
 
         if(ctx.getChild(0) == ctx.FLOAT()) {
-            return ctx.getChild(0);
+            return new Numeric();
         }
 
         if(ctx.getChild(0) == ctx.TYPENAME()) {
-            return ctx.getChild(0);
+            //TODO: ANALISAR SE JA EXISTE NO ARRAY DE TIPOS, SE EXISTIR RETORNA O DATA(TYPE) SE NAO
+            throw new RuntimeException("Type: " + ctx.getChild(0) + " is not defined yet");
         }
 
         throw new RuntimeException("unknown operator: " + ctx.getChild(0).toString());
@@ -155,10 +154,14 @@ public class SemanticAnalyser extends langBaseVisitor<Object> {
             //TODO: ITERATE PARENTHESIS_OPEN exp PARENTHESIS_CLOSE cmd
         }
         if(ctx.getChild(0) == ctx.READ()){
-            //TODO: READ lvalue SEMI
+            Object value = visitLvalue(ctx.lvalue(0));
+            if(value instanceof String){
+                //TODO: OLHAR O VETOR DE VARIAVEIS SE SE JA EXISTIR EXTOURAR ERRO, SE NAO ADICIONAR ELA LÁ
+            }
+            throw new RuntimeException("Invalid value to read");
         }
         if(ctx.getChild(0) == ctx.PRINT()){
-            //TODO: PRINT exp SEMI
+            visitExp(ctx.exp(0));
         }
         if(ctx.getChild(0) == ctx.RETURN()){
             //TODO: RETURN exp (COMMA exp)* SEMI
@@ -291,7 +294,7 @@ public class SemanticAnalyser extends langBaseVisitor<Object> {
     @Override
     public SemanticTypes visitPexp(langParser.PexpContext ctx) {
         if (ctx.getChildCount() == 1) {
-            return (SemanticTypes)this.visitLvalue(ctx.lvalue());
+            //TODO: chamada ao lvalue
         }
         if (ctx.getChild(0) == ctx.PARENTHESIS_OPEN())
         {
@@ -299,7 +302,17 @@ public class SemanticAnalyser extends langBaseVisitor<Object> {
         }
         if (ctx.getChild(0) == ctx.NEW())
         {
-            //TODO: NEW type (BRACKET_OPEN (exp)? BRACKET_CLOSE)?
+            SemanticTypes semanticType = visitType(ctx.type());
+
+            if(ctx.BRACKET_OPEN() != null) {
+                try {
+                    Integer.parseInt(visitExp(ctx.exp()).toString());
+                } catch (NumberFormatException e) {
+                    throw new RuntimeException("Invalid operator in size of array, must be int");
+                }
+
+                return semanticType;
+            }
         }
         if (ctx.getChild(0) == ctx.IDENTIFIER())
         {
@@ -326,10 +339,14 @@ public class SemanticAnalyser extends langBaseVisitor<Object> {
     }
 
     @Override
-    public SemanticTypes visitExps(langParser.ExpsContext ctx) {
-        if(ctx.getChild(1) == ctx.COMMA()) {
-            return this.visitExp(ctx.exp(1));
+    public ArrayList<SemanticTypes> visitExps(langParser.ExpsContext ctx) {
+
+        ArrayList<SemanticTypes> allSemanticTypes = new ArrayList<>();
+        if(Objects.nonNull(ctx)){
+            for (langParser.ExpContext exp : ctx.exp()){
+                allSemanticTypes.add(visitExp(exp));
+            }
         }
-        return this.visitExp(ctx.exp(0));
+        return allSemanticTypes;
     }
 }
