@@ -5,24 +5,18 @@ import lang.parser.implementation.lang.parser.antlr.langParser;
 import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Objects;
-import java.util.Stack;
+import java.util.*;
 
 public class SemanticAnalyser extends langBaseVisitor<Object> {
 
-    private final Stack<HashMap<String, Object>> enviroment;
     private final HashMap<String, Object> functions;
     private final HashMap<String, Object> dataClass;
-    private final Stack<Object> operands;
+    private final HashSet<String> variablesNames;
 
     public SemanticAnalyser() {
-        enviroment = new Stack<>();
-        enviroment.push(new HashMap<>());
         functions = new HashMap<>();
         dataClass = new HashMap<>();
-        operands = new Stack<>();
+        variablesNames = new HashSet<>();
     }
 
     @Override
@@ -42,12 +36,15 @@ public class SemanticAnalyser extends langBaseVisitor<Object> {
     @Override
     public SemanticTypes visitData(langParser.DataContext ctx) {
         if (ctx.getChild(0) == ctx.DATA()) {
-            DataClassDefinition dataClassDefinition = new DataClassDefinition();
+            DataClass dataClassDefinition = new DataClass();
             if (Objects.nonNull(ctx.decl())) {
                 for (langParser.DeclContext ctxDecl : ctx.decl()) {
                     Object result = this.visitDecl(ctxDecl);
                     dataClassDefinition.properties.put(ctxDecl.getChild(0).getText(), (TerminalNodeImpl) result);
                 }
+            }
+            if(dataClass.get(ctx.getChild(1).getText()) != null) {
+                throw new RuntimeException("DataClass already defined");
             }
             dataClass.put(ctx.getChild(1).getText(), dataClassDefinition);
         }
@@ -71,14 +68,19 @@ public class SemanticAnalyser extends langBaseVisitor<Object> {
             };
         }
 
-        return super.visitFunc(ctx);
+        return null;
     }
 
     @Override
-    public SemanticTypes visitParams(langParser.ParamsContext ctx) {
-        //TODO: IDENTIFIER DPDP type (COMMA IDENTIFIER DPDP type)*
+    public List<SemanticTypes> visitParams(langParser.ParamsContext ctx) {
 
-        return super.visitParams(ctx);
+        ArrayList<SemanticTypes> functionParameters = new ArrayList<>();
+
+        for (langParser.TypeContext ctxType : ctx.type()) {
+            functionParameters.add(this.visitType(ctxType));
+        }
+
+        return functionParameters;
     }
 
     @Override
@@ -111,8 +113,11 @@ public class SemanticAnalyser extends langBaseVisitor<Object> {
         }
 
         if(ctx.getChild(0) == ctx.TYPENAME()) {
-            //TODO: ANALISAR SE JA EXISTE NO ARRAY DE TIPOS, SE EXISTIR RETORNA O DATA(TYPE) SE NAO
-            throw new RuntimeException("Type: " + ctx.getChild(0) + " is not defined yet");
+            if(dataClass.get(ctx.getChild(0).toString()) == null) {
+                throw new RuntimeException("Type: " + ctx.getChild(0) + " is not defined yet");
+            } else {
+                return new DataClass(ctx.getChild(0).toString());
+            }
         }
 
         throw new RuntimeException("unknown operator: " + ctx.getChild(0).toString());
@@ -121,14 +126,14 @@ public class SemanticAnalyser extends langBaseVisitor<Object> {
     @Override
     public SemanticTypes visitCmd(langParser.CmdContext ctx) {
         if(ctx.getChild(0) == ctx.lvalue(0)) {
+            variablesNames.add(ctx.lvalue(0).getText());
             Object valueLValue = visitLvalue(ctx.lvalue(0));
-            Object valueExp = visitExp(ctx.exp(0));
-            enviroment.peek().put(valueLValue.toString(), valueExp);
+            SemanticTypes valueExp = visitExp(ctx.exp(0));
 
-            System.out.println(enviroment.peek());
+            System.out.println(valueLValue);
+            System.out.println(valueExp);
         }
 
-        //TODO : TESTAR ESSE IF AI
         if(ctx.getChild(0) == ctx.KEYS_OPEN()){
             for (langParser.CmdContext ctxCmd : ctx.cmd()) {
                 return this.visitCmd(ctxCmd);
@@ -136,29 +141,37 @@ public class SemanticAnalyser extends langBaseVisitor<Object> {
         }
 
         if(ctx.getChild(0) == ctx.IF()){
-            if(ctx.getChild(ctx.getChildCount() - 2) == ctx.ELSE()){
-                if(Boolean.valueOf(this.visitExp(ctx.exp(0)).toString())){
-                    return this.visitCmd(ctx.cmd(0));
-                } else {
-                    return this.visitCmd(ctx.cmd(1));
-                }
-            } else {
-                if(Boolean.valueOf(this.visitExp(ctx.exp(0)).toString())){
-                    return this.visitCmd(ctx.cmd(0));
-                } else {
-                    return null;
-                }
+            SemanticTypes expression = this.visitExp(ctx.exp(0));
+            if (!expression.checkClass(new Boolean())) {
+                throw new RuntimeException("The expression is not a boolean");
+            }
+            for (langParser.CmdContext ctxCmd : ctx.cmd()) {
+                this.visitCmd(ctxCmd);
             }
         }
+
         if(ctx.getChild(0) == ctx.ITERATE()){
-            //TODO: ITERATE PARENTHESIS_OPEN exp PARENTHESIS_CLOSE cmd
+            SemanticTypes expresion = visitExp(ctx.exp(0));
+
+            if (! expresion.checkClass(new Boolean())) {
+                throw new RuntimeException("The expression is not a boolean");
+            }
+
+            visitCmd(ctx.cmd(0));
         }
+
         if(ctx.getChild(0) == ctx.READ()){
             Object value = visitLvalue(ctx.lvalue(0));
             if(value instanceof String){
-                //TODO: OLHAR O VETOR DE VARIAVEIS SE SE JA EXISTIR EXTOURAR ERRO, SE NAO ADICIONAR ELA LÁ
+                if (variablesNames.stream().anyMatch(x -> x.equals(value.toString()))) {
+                    throw new RuntimeException("Variable is already declared");
+                } else {
+                    variablesNames.add(value.toString());
+                    return null;
+                }
+            } else{
+                throw new RuntimeException("Invalid value to read");
             }
-            throw new RuntimeException("Invalid value to read");
         }
         if(ctx.getChild(0) == ctx.PRINT()){
             visitExp(ctx.exp(0));
@@ -173,7 +186,7 @@ public class SemanticAnalyser extends langBaseVisitor<Object> {
             //TODO: IDENTIFIER PARENTHESIS_OPEN (exps)? PARENTHESIS_CLOSE (LESSTHAN (DP)? lvalue (COMMA lvalue)* (DP)? MORETHAN)? SEMI;
         }
 
-        return super.visitCmd(ctx);
+        return null;
     }
 
     @Override
@@ -205,7 +218,7 @@ public class SemanticAnalyser extends langBaseVisitor<Object> {
             throw new RuntimeException("different types");
         }
 
-        return left;
+        return new Boolean();
     }
 
     @Override
@@ -294,7 +307,15 @@ public class SemanticAnalyser extends langBaseVisitor<Object> {
     @Override
     public SemanticTypes visitPexp(langParser.PexpContext ctx) {
         if (ctx.getChildCount() == 1) {
-            //TODO: chamada ao lvalue
+
+            Object variable = visitLvalue(ctx.lvalue());
+
+            if (!(variable instanceof SemanticTypes)) {
+                throw new RuntimeException("variable is not declared: ");
+            }
+
+            return (SemanticTypes) variable;
+
         }
         if (ctx.getChild(0) == ctx.PARENTHESIS_OPEN())
         {
@@ -325,14 +346,23 @@ public class SemanticAnalyser extends langBaseVisitor<Object> {
     @Override
     public Object visitLvalue(langParser.LvalueContext ctx) {
         if(ctx.getChild(0) == ctx.IDENTIFIER()) {
-            Object value = enviroment.peek().get(ctx.getChild(0).toString());
-            return value == null ? ctx.getChild(0) : value;
+            Object value = variablesNames.stream().anyMatch(x -> x.equals(ctx.getChild(0).toString()));
+            if(variablesNames.stream().anyMatch(x -> x.equals(ctx.getChild(0).toString())))
+            return value;
         }
         if (ctx.getChildCount() == 4) {
-            //TODO: lvalue BRACKET_OPEN exp BRACKET_CLOSE
+            Object variable = visitLvalue(ctx.lvalue());
+
+            if (!(variable instanceof SemanticTypes)) {
+                throw new RuntimeException("null pointer");
+            }
+
         }
         if (ctx.getChildCount() == 3) {
-            //TODO: lvalue DOT IDENTIFIER
+            Object variable = visitLvalue(ctx.lvalue());
+            String propertyName = ctx.IDENTIFIER().getText();
+
+            return dataClass.get(propertyName);
         }
 
         throw new RuntimeException("unknown operator: " + ctx.getChild(0).toString());
