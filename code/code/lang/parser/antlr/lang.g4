@@ -57,7 +57,8 @@ func : IDENTIFIER PARENTHESIS_OPEN (params)? PARENTHESIS_CLOSE (DP type (COMMA t
 params : IDENTIFIER DPDP type (COMMA IDENTIFIER DPDP type)*;
 type : type BRACKET_OPEN BRACKET_CLOSE | btype;
 btype : INTEGER | CHAR | BOOLEAN | FLOAT | TYPENAME;
-cmd : KEYS_OPEN (cmd)* KEYS_CLOSE | IF PARENTHESIS_OPEN exp PARENTHESIS_CLOSE cmd
+cmd :               KEYS_OPEN (cmd)* KEYS_CLOSE
+                    | IF PARENTHESIS_OPEN exp PARENTHESIS_CLOSE cmd
                     | IF PARENTHESIS_OPEN exp PARENTHESIS_CLOSE cmd ELSE cmd
                     | ITERATE PARENTHESIS_OPEN exp PARENTHESIS_CLOSE cmd
                     | READ lvalue SEMI
@@ -70,7 +71,11 @@ rexp : aexp LESSTHAN aexp | rexp EQEQ aexp | rexp NOTEQ aexp | aexp;
 aexp : aexp PLUS mexp | aexp MINUS mexp | mexp;
 mexp : mexp TIMES sexp | mexp SLASH sexp | mexp PERCENT sexp | sexp;
 sexp : NOT sexp | MINUS sexp | BOOLEAN | NULL | INTEGER | FLOAT | CHAR | LITERAL | pexp;
-pexp : lvalue | PARENTHESIS_OPEN exp PARENTHESIS_CLOSE | NEW type (BRACKET_OPEN (exp)? BRACKET_CLOSE)?
-              | IDENTIFIER PARENTHESIS_OPEN (exps)? PARENTHESIS_CLOSE BRACKET_OPEN exp BRACKET_CLOSE;
-lvalue : IDENTIFIER | lvalue BRACKET_OPEN exp BRACKET_CLOSE | lvalue DOT IDENTIFIER;
+pexp :          lvalue
+                | PARENTHESIS_OPEN exp PARENTHESIS_CLOSE
+                | NEW type (BRACKET_OPEN (exp)? BRACKET_CLOSE)?
+                | IDENTIFIER PARENTHESIS_OPEN (exps)? PARENTHESIS_CLOSE BRACKET_OPEN exp BRACKET_CLOSE;
+lvalue :        IDENTIFIER
+                | lvalue BRACKET_OPEN exp BRACKET_CLOSE
+                | lvalue DOT IDENTIFIER;
 exps : exp (COMMA exp)*;

@@ -1,0 +1,14 @@
+group python;
+prog(funcs) ::= <<
+
+<funcs;separator="\n">
+main()
+
+>>
+
+func(name, params, cmds) ::= <<
+
+def <name>(<params>):
+    <cmds; separator="\n">
+
+>>

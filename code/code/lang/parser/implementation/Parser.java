@@ -7,6 +7,7 @@ package lang.parser.implementation;
 
 import lang.ast.SuperNode;
 import lang.parser.ParseAdaptor;
+import lang.parser.implementation.codeGeneration.PythonGenerator;
 import lang.parser.implementation.lang.parser.antlr.langParser;
 import lang.parser.implementation.lang.parser.antlr.langLexer;
 import lang.parser.implementation.semantic.SemanticAnalyser;
@@ -32,10 +33,13 @@ public class Parser implements ParseAdaptor {
                 return null;
             }
 
-            SemanticAnalyser semanticAnalyser = new SemanticAnalyser();
-            semanticAnalyser.visit(tree);
-            Interpretator interpretator = new Interpretator();
+            //SemanticAnalyser semanticAnalyser = new SemanticAnalyser();
+            //semanticAnalyser.visit(tree);
+            //Interpretator interpretator = new Interpretator();
             //interpretator.visit(tree);
+
+            PythonGenerator pythonGenerator = new PythonGenerator();
+            pythonGenerator.visit(tree);
 
             SuperNode node = new Node();
             return node;
