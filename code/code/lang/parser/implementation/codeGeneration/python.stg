@@ -1,7 +1,8 @@
 group python;
-prog(funcs) ::= <<
+prog(funcs, data) ::= <<
 
 <funcs;separator="\n">
+<data;separator="\n">
 main()
 
 >>
@@ -11,4 +12,10 @@ func(name, params, cmds) ::= <<
 def <name>(<params>):
     <cmds; separator="\n">
 
+>>
+
+data(name, decl) ::= <<
+<name> = {
+    <decl; separator=",\n">
+}
 >>

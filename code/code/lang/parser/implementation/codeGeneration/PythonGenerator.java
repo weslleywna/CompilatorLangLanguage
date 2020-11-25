@@ -29,6 +29,15 @@ public class PythonGenerator extends langBaseVisitor<Object> {
             prog.add("funcs", func);
         }
 
+        for (langParser.DataContext dataCtx: ctx.data()) {
+            ST data = pythonTemplate.getInstanceOf("data");
+            data.add("name", dataCtx.TYPENAME().toString());
+            for (langParser.DeclContext declContext: dataCtx.decl()) {
+                data.add("decl", this.visitDecl(declContext));
+            }
+            prog.add("data", data);
+        }
+
         PrintStream ps = null;
         try {
             ps = new PrintStream( "teste" + ".py");
@@ -41,12 +50,15 @@ public class PythonGenerator extends langBaseVisitor<Object> {
 
     @Override
     public Object visitData(langParser.DataContext ctx) {
+
         return super.visitData(ctx);
     }
 
     @Override
     public Object visitDecl(langParser.DeclContext ctx) {
-        return super.visitDecl(ctx);
+        String decl = ctx.IDENTIFIER().toString() + " = " + this.visitType(ctx.type());
+
+        return decl;
     }
 
     @Override
@@ -66,12 +78,17 @@ public class PythonGenerator extends langBaseVisitor<Object> {
 
     @Override
     public Object visitType(langParser.TypeContext ctx) {
+        if (ctx.getChild(0) == ctx.btype()){
+            return this.visitBtype(ctx.btype());
+        }
+
+        //TODO type BRACKET_OPEN BRACKET_CLOSE
         return super.visitType(ctx);
     }
 
     @Override
     public Object visitBtype(langParser.BtypeContext ctx) {
-        return super.visitBtype(ctx);
+        return ctx.getChild(0).toString();
     }
 
     @Override

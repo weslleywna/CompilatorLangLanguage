@@ -1,3 +1,9 @@
+data Ponto {
+   x :: Float;
+   y :: Float;
+   z :: Int;
+}
+
 main(){
   x = 1+2;
   y=0+5;
@@ -29,5 +35,7 @@ teste() {
 
     main(x,y,2);
     main(x,y,2)<x,y>;
-
 }
+
+
+

@@ -30,5 +30,10 @@ def teste():
     main(x,y,2)
     y,x = main(x,y,2)
 
+Ponto = {
+    x = Float,
+    y = Float,
+    z = Int
+}
 main()
 
