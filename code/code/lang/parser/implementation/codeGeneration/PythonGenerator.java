@@ -16,7 +16,7 @@ public class PythonGenerator extends langBaseVisitor<Object> {
     private static int tabs = 0;
 
     public PythonGenerator() {
-        this.pythonTemplate = new STGroupFile("./python.stg");
+        this.pythonTemplate = new STGroupFile("C:\\Users\\wesll\\Documents\\Git\\CompiladorLinguagemLang\\code\\code\\lang\\parser\\implementation\\codeGeneration\\python.stg");
     }
 
     @Override
@@ -121,9 +121,19 @@ public class PythonGenerator extends langBaseVisitor<Object> {
         //IF E IF ELSE
         if(ctx.getChild(0) == ctx.IF()){
             if(ctx.getChild(ctx.getChildCount() - 2) == ctx.ELSE()){
-                return "if " + this.visitExp(ctx.exp(0)) + ":\n\t" + this.visitCmd(ctx.cmd(0)) + "\nelse:\n\t" + this.visitCmd(ctx.cmd(1));
+                tabs++;
+                String cmdLine = "if " + this.visitExp(ctx.exp(0)) + ":\n"+ getTabs() + this.visitCmd(ctx.cmd(0));
+                tabs--;
+                cmdLine += "\n" + getTabs();
+                tabs++;
+                cmdLine += "else:\n" + getTabs() + this.visitCmd(ctx.cmd(1));
+                tabs--;
+                return cmdLine;
             } else {
-                return "if " + this.visitExp(ctx.exp(0)) + ":\n\t" + this.visitCmd(ctx.cmd(0));
+                tabs++;
+                String cmdLine = "if " + this.visitExp(ctx.exp(0)) + ":\n" + getTabs() + this.visitCmd(ctx.cmd(0));
+                tabs--;
+                return cmdLine;
             }
         }
 
@@ -159,10 +169,13 @@ public class PythonGenerator extends langBaseVisitor<Object> {
         }
 
         if(ctx.getChild(0) == ctx.KEYS_OPEN()){
+            tabs++;
             StringBuilder cmdLine = new StringBuilder();
+            cmdLine.append("\t");
             for (langParser.CmdContext cmdCtx: ctx.cmd()) {
-                cmdLine.append(this.visitCmd(cmdCtx)).append("\n\t");
+                cmdLine.append(this.visitCmd(cmdCtx)).append("\n" + getTabs());
             }
+            tabs--;
             return cmdLine.toString();
         }
 
@@ -234,9 +247,16 @@ public class PythonGenerator extends langBaseVisitor<Object> {
             if(ctx.getChild(2) != null){
                 return "[None] * " + this.visitExp(ctx.exp());
             } else{
-                return this.visitType(ctx.type());
+                return "type('copy', " + this.visitType(ctx.type()) + ".__bases__, dict(" + this.visitType(ctx.type()) + ".__dict__))";
             }
 
+        }
+        if(ctx.getChild(0) == ctx.IDENTIFIER()){
+            if(ctx.getChild(2) != null){
+                if(this.visitExp(ctx.exp()).toString().equals("0")) {
+                    return ctx.IDENTIFIER() + "(" + this.visitExps(ctx.exps()) + ")";
+                }
+            }
         }
         if(ctx.getChild(0) == ctx.lvalue()){
             return this.visitLvalue(ctx.lvalue());
