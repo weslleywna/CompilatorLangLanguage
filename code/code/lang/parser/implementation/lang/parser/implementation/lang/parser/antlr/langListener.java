@@ -1,5 +1,5 @@
 // Generated from C:/Users/wesll/Documents/Git/CompiladorLinguagemLang/code/code/lang/parser/antlr\lang.g4 by ANTLR 4.8
-package lang.parser.antlr;
+package lang.parser.implementation.lang.parser.antlr;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
 /**

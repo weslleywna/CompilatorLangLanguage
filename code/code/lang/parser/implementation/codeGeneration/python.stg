@@ -9,13 +9,13 @@ main()
 
 func(name, params, cmds) ::= <<
 
-def <name>(<params>):
+def <name>(<params; separator=",">):
     <cmds; separator="\n">
 
 >>
 
-data(name, decl) ::= <<
-<name> = {
-    <decl; separator=",\n">
-}
+data(name, decl, attributes) ::= <<
+class <name>:
+    def __init__(self,<decl; separator=",">):
+        <attributes; separator=",\n">
 >>

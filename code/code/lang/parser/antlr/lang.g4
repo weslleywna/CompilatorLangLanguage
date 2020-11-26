@@ -13,42 +13,49 @@ ITERATE: 'iterate';
 READ: 'read';
 RETURN: 'return';
 NEW: 'new';
-BOOLEAN: 'true' | 'false';
-NULL: 'null';
+
+PLUS: '+';
+MINUS: '-';
+TIMES: '*';
+SLASH: '/';
+PERCENT: '%';
+
+LESSTHAN: '<';
+MORETHAN: '>';
+EQEQ: '==';
+NOTEQ: '!=';
+EQCEQC: '&&';
+NOT: '!';
+
 PARENTHESIS_OPEN: '(';
 PARENTHESIS_CLOSE: ')';
 BRACKET_OPEN: '[';
 BRACKET_CLOSE: ']';
 KEYS_OPEN: '{';
 KEYS_CLOSE: '}';
+
 SEMI: ';';
 DOT: '.';
 COMMA: ',';
 EQ: '=';
-LESSTHAN: '<';
-MORETHAN: '>';
-EQEQ: '==';
-NOTEQ: '!=';
-PLUS: '+';
-MINUS: '-';
-TIMES: '*';
-SLASH: '/';
-PERCENT: '%';
-EQCEQC: '&&';
-NOT: '!';
 DP: ':';
 DPDP: '::';
+
+COMMENT: '--' .*? ~[\r\n]* -> skip;
+MULTILINE_COMMENT: '{-' .*? '-}' -> skip;
+WHITESPACE: [ \t\r\n]+ -> skip;
+
+TYPENAME: UPPERCASE LOWERCASE*;
+BOOLEAN: 'true' | 'false';
+NULL: 'null';
 IDENTIFIER: LOWERCASE (CHAR | '_' | [0-9])*;
-TYPENAME: UPPERCASE LOWERCASE;
 INTEGER: [0-9]+;
 FLOAT: [0-9]* '.' [0-9]+;
-LITERAL: '\'' (CHAR | '\\n' | '\\t' | '\\b' | '\\r' | '\\\\') '\'';
+LITERAL: '\'' (CHAR | '\\n' | '\\t' | '\\b' | '\\r' | '\\\\' | UNICODE) '\'';
 CHAR: UPPERCASE | LOWERCASE;
 LOWERCASE: 'a'..'z'+;
 UPPERCASE: 'A'..'Z'+;
-WHITESPACE: [ \t\r\n]+ -> skip;
-COMMENT: '--' .? ~[\r\n] -> skip;
-MULTILINE_COMMENT: '{-' .*? '-}' -> skip;
+UNICODE: '\u0000'..'\u00FF';
 
 prog : (data)* (func)*;
 data : DATA TYPENAME KEYS_OPEN (decl)* KEYS_CLOSE;
